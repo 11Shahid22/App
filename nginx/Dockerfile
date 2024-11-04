@@ -1,12 +1,22 @@
-# Use a specific version of NGINX as the base image
+
+# Use the official NGINX image as the base image
 FROM nginx:latest
 
-# Copy the custom configuration file to conf.d
+# Create the sites-available and sites-enabled directories
+RUN mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled
 
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-# Expose port 4500
+# Copy the custom sites-available configuration file
+COPY nginx.conf /etc/nginx/sites-available/
+
+# Create a symlink from sites-available to sites-enabled
+RUN ln -s /etc/nginx/sites-available/nginx.conf /etc/nginx/sites-enabled/
+
+# Create a custom nginx.conf that includes the sites-enabled directory
+RUN echo 'worker_processes 1 ;\n\
+events { worker_connections 1024; }\n\
+http {\n\
+    include /etc/nginx/sites-enabled/*.conf;\n\
+}' > /etc/nginx/nginx.conf
+# Expose port 80
 EXPOSE 4500
-
-# Start NGINX when the container runs
-CMD ["nginx", "-g", "daemon off;"]
 
